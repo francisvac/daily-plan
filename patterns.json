@@ -1,0 +1,48 @@
+{
+  "patterns": {
+    "energy_levels": {
+      "morning_peak": null,
+      "afternoon_peak": null,
+      "evening_peak": null,
+      "overall_pattern": "unknown"
+    },
+    "task_preferences": {
+      "preferred_task_types": [],
+      "avoid_task_types": [],
+      "complex_task_times": [],
+      "quick_task_times": []
+    },
+    "completion_patterns": {
+      "high_completion_days": [],
+      "low_completion_days": [],
+      "seasonal_patterns": {},
+      "weekly_patterns": {}
+    },
+    "feedback_themes": {
+      "what_works": [],
+      "what_doesnt_work": [],
+      "common_obstacles": [],
+      "success_factors": []
+    },
+    "productivity_insights": {
+      "optimal_task_count": null,
+      "best_task_duration": null,
+      "break_frequency": null,
+      "focus_session_length": null
+    }
+  },
+  "history": {
+    "plans_generated": 0,
+    "feedback_processed": 0,
+    "accuracy_score": 0.0,
+    "last_updated": null
+  },
+  "user_preferences": {
+    "morning_start_time": "09:00",
+    "evening_end_time": "21:00",
+    "preferred_task_count": 6,
+    "break_frequency": "2_hours",
+    "focus_areas": [],
+    "avoid_areas": []
+  }
+}
