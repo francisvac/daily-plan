@@ -365,6 +365,31 @@ Make activities specific, age-appropriate, and developmentally beneficial.
         print("  2. Complete activities throughout the day")
         print("  3. Run 'daily-plan feedback' in the evening")
         print("  4. System will learn and improve tomorrow's plan")
+        
+        # Send email if configured
+        self.send_email_if_configured(target_date, plan_file)
+    
+    def send_email_if_configured(self, target_date, plan_file):
+        """Send email if email is configured"""
+        try:
+            email_script = self.plan_dir / "email_integration.py"
+            if email_script.exists():
+                # Check if email is configured
+                config_file = self.plan_dir / "email_config.json"
+                if config_file.exists():
+                    print()
+                    print("📧 Sending plan via email...")
+                    import subprocess
+                    result = subprocess.run([
+                        'python3', str(email_script), 'send', target_date.strftime('%Y-%m-%d')
+                    ], capture_output=True, text=True, timeout=30)
+                    
+                    if result.returncode == 0:
+                        print(result.stdout.strip())
+                    else:
+                        print(f"Email sending failed: {result.stderr.strip()}")
+        except Exception as e:
+            print(f"Email error: {e}")
     
     def save_patterns(self, patterns):
         """Save patterns to file"""
