@@ -1,4 +1,47 @@
 {
+  "baby_patterns": {
+    "age_months": 6,
+    "favorite_activities": [
+      "tummy_time",
+      "reading",
+      "sensory_play"
+    ],
+    "sleep_schedule": {
+      "morning_nap": "9:00 AM",
+      "afternoon_nap": "1:00 PM",
+      "evening_nap": "4:00 PM",
+      "night_bedtime": "7:30 PM"
+    },
+    "feeding_schedule": {
+      "morning": "7:00 AM",
+      "midday": "11:30 AM",
+      "afternoon": "3:30 PM",
+      "evening": "6:30 PM",
+      "night": "10:00 PM"
+    },
+    "preferred_tummy_times": [
+      "morning",
+      "afternoon"
+    ],
+    "favorite_reading_times": [
+      "morning",
+      "before_naps",
+      "bedtime"
+    ],
+    "sleep_patterns": {
+      "best_sleep_duration": "2-3 hours",
+      "sleep_cues": [
+        "rubbing eyes",
+        "yawning",
+        "fussy"
+      ],
+      "optimal_environment": [
+        "dark",
+        "quiet",
+        "white_noise"
+      ]
+    }
+  },
   "patterns": {
     "energy_levels": {
       "morning_peak": null,

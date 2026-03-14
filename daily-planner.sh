@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ZeroClaw Daily Planning Interface
-# Provides easy commands for daily plan management
+# Provides easy commands for daily plan management (now with baby activities!)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLAN_DIR="$HOME/daily-plans"
@@ -11,6 +11,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
 NC='\033[0m' # No Color
 
 # Helper functions
@@ -23,20 +24,22 @@ print_usage() {
     echo "Usage: $0 [command] [options]"
     echo ""
     echo "Commands:"
-    echo "  generate [date]     Generate daily plan (default: today)"
-    echo "  analyze            Analyze yesterday's feedback only"
-    echo "  review [date]      Review a specific day's plan"
-    echo "  feedback [date]    Open today's plan for feedback entry"
-    echo "  patterns           Show learned patterns"
-    echo "  week               Show week overview"
-    echo "  setup              Set up cron job for automatic generation"
-    echo "  help               Show this help"
+    echo "  generate [date] [age]    Generate daily plan (default: today, age from patterns)"
+    echo "  baby [date] [age]       Generate baby-focused daily plan"
+    echo "  analyze                 Analyze yesterday's feedback only"
+    echo "  review [date]           Review a specific day's plan"
+    echo "  feedback [date]         Open today's plan for feedback entry"
+    echo "  patterns                Show learned patterns"
+    echo "  week                    Show week overview"
+    echo "  setup                   Set up cron job for automatic generation"
+    echo "  help                    Show this help"
     echo ""
     echo "Examples:"
-    echo "  $0 generate                    # Generate today's plan"
-    echo "  $0 generate 2026-03-15        # Generate plan for specific date"
-    echo "  $0 feedback                    # Open today's plan for feedback"
-    echo "  $0 patterns                    # Show learned patterns"
+    echo "  $0 generate                     # Generate today's plan"
+    echo "  $0 baby 2026-03-15 6          # Generate baby plan for 6-month-old"
+    echo "  $0 baby                         # Generate baby plan with saved age"
+    echo "  $0 feedback                     # Open today's plan for feedback"
+    echo "  $0 patterns                     # Show learned patterns"
 }
 
 # Generate plan for specific date
@@ -45,7 +48,23 @@ cmd_generate() {
     print_header
     echo "Generating daily plan for: $date"
     echo ""
-    "$SCRIPT_DIR/generate-daily-plan.sh" "$date"
+    "$SCRIPT_DIR/generate-enhanced-plan.py" "$date"
+}
+
+# Generate baby plan for specific date
+cmd_baby() {
+    local date="${1:-$(date +%Y-%m-%d)}"
+    local age="${2:-}"
+    
+    print_header
+    echo -e "${PURPLE}👶 Generating Baby Daily Plan${NC}"
+    echo "Date: $date"
+    if [[ -n "$age" ]]; then
+        echo "Baby Age: $age months"
+    fi
+    echo ""
+    
+    "$SCRIPT_DIR/generate-baby-plan.py" "$date" "$age"
 }
 
 # Analyze feedback only
@@ -53,7 +72,7 @@ cmd_analyze() {
     print_header
     echo "Analyzing yesterday's feedback..."
     echo ""
-    "$SCRIPT_DIR/generate-daily-plan.sh" "$(date +%Y-%m-%d)" "true"
+    "$SCRIPT_DIR/generate-enhanced-plan.sh" "$(date +%Y-%m-%d)" "true"
 }
 
 # Review a plan
@@ -81,11 +100,26 @@ cmd_feedback() {
     if [[ -f "$plan_file" ]]; then
         echo "Opening plan for feedback: $date"
         echo ""
-        echo "Edit the following sections:"
-        echo "  ✅ DONE Section - Mark completed tasks"
-        echo "  📝 FEEDBACK Section - What worked/didn't work"
-        echo "  🔄 Tomorrow's Prep - Insights for tomorrow"
-        echo ""
+        
+        # Check if it's a baby plan
+        if grep -q "👶 Baby Context\|🍼 Daily Baby Activities" "$plan_file"; then
+            echo -e "${PURPLE}👶 Baby Plan - Feedback Guide:${NC}"
+            echo "Fill in these sections:"
+            echo "  ✅ What Baby Enjoyed Most - Activities that made baby happy"
+            echo "  ❌ What Baby Didn't Like - Activities that caused fussiness"
+            echo "  🎓 Sleep & Feeding Patterns - Quality, response, fussy/happy times"
+            echo "  📝 Developmental Observations - New skills, milestones, changes"
+            echo ""
+        else
+            echo "Opening today's plan for feedback entry"
+            echo ""
+            echo "Edit the following sections:"
+            echo "  ✅ DONE Section - Mark completed tasks"
+            echo "  📝 FEEDBACK Section - What worked/didn't work"
+            echo "  🔄 Tomorrow's Prep - Insights for tomorrow"
+            echo ""
+        fi
+        
         echo "Press Enter to open in editor..."
         read
         
@@ -93,7 +127,7 @@ cmd_feedback() {
         ${EDITOR:-nano} "$plan_file"
         
         echo ""
-        echo -e "${GREEN}Feedback saved!${NC}"
+        echo -e "${GREEN}✅ Feedback saved!${NC}"
         echo "Patterns will be updated when you generate tomorrow's plan."
     else
         echo -e "${RED}No plan found for $date${NC}"
@@ -111,14 +145,14 @@ cmd_patterns() {
     
     if [[ -f "$patterns_file" ]]; then
         if command -v zeroclaw >/dev/null 2>&1; then
-            zeroclaw agent -m "Analyze the patterns.json file and provide a human-readable summary of:
-1. Energy level patterns
-2. Task preferences 
-3. Completion patterns
-4. Key insights
+            zeroclaw agent -m "Analyze patterns.json file and provide a human-readable summary of:
+1. Baby activity preferences and patterns
+2. Sleep and feeding schedule insights  
+3. Developmental progress tracking
+4. Favorite times for different activities
 5. Recommendations for future planning
 
-Keep it concise and actionable." --quiet
+Keep it concise and actionable for parents." --quiet
         else
             echo "ZeroClaw not available. Showing raw patterns:"
             cat "$patterns_file"
@@ -170,7 +204,9 @@ print(current.strftime('%A'))
         
         echo -n "$day_name ($date): "
         if [[ -f "$plan_file" ]]; then
-            if grep -q "TBD" "$plan_file"; then
+            if grep -q "👶 Baby Context\|🍼 Daily Baby Activities" "$plan_file"; then
+                echo -e "${PURPLE}Baby Plan${NC}"
+            elif grep -q "TBD" "$plan_file"; then
                 echo -e "${YELLOW}Generated (needs feedback)${NC}"
             else
                 echo -e "${GREEN}Complete${NC}"
@@ -188,7 +224,7 @@ cmd_setup() {
     echo ""
     
     # Create cron job to generate plan at 6 AM daily
-    local cron_entry="0 6 * * * $SCRIPT_DIR/generate-daily-plan.sh"
+    local cron_entry="0 6 * * * $SCRIPT_DIR/generate-enhanced-plan.py"
     
     echo "This will add a cron job to generate daily plans at 6:00 AM."
     echo "Cron entry: $cron_entry"
@@ -212,6 +248,9 @@ cmd_setup() {
 case "${1:-help}" in
     "generate")
         cmd_generate "$2"
+        ;;
+    "baby")
+        cmd_baby "$2" "$3"
         ;;
     "analyze")
         cmd_analyze
