@@ -1,44 +1,44 @@
 {
   "baby_patterns": {
-    "age_months": 6,
+    "birth_date": "2025-03-17",
+    "age_months": -1,
+    "developmental_stage": "prenatal",
     "favorite_activities": [
-      "tummy_time",
-      "reading",
-      "sensory_play"
+      "belly_rubbing",
+      "reading_stories",
+      "music_time",
+      "gentle_movement"
     ],
     "sleep_schedule": {
-      "morning_nap": "9:00 AM",
-      "afternoon_nap": "1:00 PM",
-      "evening_nap": "4:00 PM",
-      "night_bedtime": "7:30 PM"
+      "mother_rest": "9:00 PM - 6:00 AM",
+      "daytime_naps": "12:00 PM - 1:00 PM"
     },
     "feeding_schedule": {
-      "morning": "7:00 AM",
-      "midday": "11:30 AM",
-      "afternoon": "3:30 PM",
-      "evening": "6:30 PM",
-      "night": "10:00 PM"
+      "mother_nutrition": "Every 2-3 hours",
+      "hydration": "8 glasses daily",
+      "prenatal_vitamins": "With breakfast"
     },
-    "preferred_tummy_times": [
+    "preferred_activity_times": [
       "morning",
-      "afternoon"
+      "afternoon",
+      "evening"
     ],
     "favorite_reading_times": [
       "morning",
-      "before_naps",
+      "before_mother_rest",
       "bedtime"
     ],
-    "sleep_patterns": {
-      "best_sleep_duration": "2-3 hours",
-      "sleep_cues": [
-        "rubbing eyes",
-        "yawning",
-        "fussy"
+    "comfort_patterns": {
+      "soothing_techniques": [
+        "gentle_music",
+        "mother_voice",
+        "belly_rubs",
+        "calming_environment"
       ],
       "optimal_environment": [
-        "dark",
         "quiet",
-        "white_noise"
+        "comfortable",
+        "temperature_controlled"
       ]
     }
   },

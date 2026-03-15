@@ -111,8 +111,31 @@ class BabyPlanGenerator:
         match = re.search(feeding_pattern, content)
         return match.group(1).strip() if match else "Normal"
     
+    def calculate_baby_age(self, target_date):
+        """Calculate baby's age in months based on birth date"""
+        patterns = self.load_patterns()
+        birth_date_str = patterns.get("baby_patterns", {}).get("birth_date")
+        
+        if birth_date_str:
+            try:
+                birth_date = datetime.strptime(birth_date_str, '%Y-%m-%d').date()
+                # Calculate months difference
+                years_diff = target_date.year - birth_date.year
+                months_diff = target_date.month - birth_date.month
+                
+                total_months = years_diff * 12 + months_diff
+                
+                # Adjust for day of month
+                if target_date.day < birth_date.day:
+                    total_months -= 1
+                
+                return total_months
+            except ValueError:
+                print(f"Warning: Invalid birth date format: {birth_date_str}")
+                return None
+        return patterns.get("baby_patterns", {}).get("age_months", -1)
+    
     def calculate_activity_success(self, content):
-        """Calculate baby activity success rate"""
         try:
             # Try new baby template format first
             if '## 🍼 Daily Baby Activities' in content:
@@ -166,10 +189,23 @@ class BabyPlanGenerator:
         """Generate baby plan using ZeroClaw AI"""
         day_name = target_date.strftime('%A')
         age_months = patterns["baby_patterns"]["age_months"]
+        developmental_stage = patterns["baby_patterns"].get("developmental_stage", "unknown")
         
         # Build context for ZeroClaw
         context = f"Generate a personalized baby daily plan for {day_name}, {target_date.strftime('%Y-%m-%d')}."
-        context += f"\n\nBaby is {age_months} months old."
+        
+        if age_months < 0:
+            # Prenatal activities
+            context += f"\n\nBaby is currently in the womb (prenatal stage), due on {patterns['baby_patterns'].get('birth_date', '2025-03-17')}."
+            context += f"\nFocus on activities that bond with the baby and prepare for birth."
+        elif age_months == 0:
+            # Newborn
+            context += f"\n\nBaby is a newborn (0 months old)."
+            context += f"\nFocus on gentle activities, bonding, and basic care routines."
+        else:
+            # Postnatal
+            context += f"\n\nBaby is {age_months} months old."
+            context += f"\nDevelopmental stage: {developmental_stage}"
         
         if yesterday_feedback:
             context += f"\n\nBased on yesterday's feedback:\n"
@@ -185,21 +221,22 @@ class BabyPlanGenerator:
 Generate age-appropriate baby activities with this JSON structure:
 {{
   "baby_age": {age_months},
-  "focus_areas": ["development", "sensory", "bonding"],
+  "developmental_stage": "{developmental_stage}",
+  "focus_areas": ["bonding", "development", "comfort"],
   "morning_activities": {{
-    "tummy_time": "Specific age-appropriate tummy time activity",
-    "reading": "Age-appropriate reading activity", 
-    "play": "Interactive play activity"
+    "bonding": "Specific age-appropriate bonding activity",
+    "development": "Age-appropriate developmental activity", 
+    "comfort": "Comfort and soothing activity"
   }},
   "afternoon_activities": {{
-    "tummy_time": "Different tummy time activity",
-    "reading": "Different reading activity",
-    "sensory": "Sensory development activity"
+    "bonding": "Different bonding activity",
+    "development": "Different developmental activity",
+    "comfort": "Different comfort activity"
   }},
   "evening_activities": {{
-    "play": "Gentle evening activity",
-    "reading": "Bedtime reading",
-    "bedtime": "Calming bedtime routine"
+    "bonding": "Gentle evening bonding activity",
+    "development": "Calming developmental activity",
+    "comfort": "Bedtime comfort routine"
   }},
   "feeding_schedule": {{
     "morning": "Time and notes",
@@ -214,10 +251,13 @@ Generate age-appropriate baby activities with this JSON structure:
     "evening_nap": "Time and duration",
     "night_sleep": "Bedtime and routine"
   }},
-  "reasoning": "Why these activities are perfect for this age and routine"
+  "reasoning": "Why these activities are perfect for this age and stage"
 }}
 
 Make activities specific, age-appropriate, and developmentally beneficial.
+For prenatal stage: focus on mother-baby bonding, reading to baby, gentle movement, music.
+For newborn stage: focus on gentle touch, bonding, basic care routines.
+For older babies: focus on sensory development, motor skills, cognitive activities.
 """, '--output-json'
             ], capture_output=True, text=True, timeout=30)
             
@@ -336,15 +376,25 @@ Make activities specific, age-appropriate, and developmentally beneficial.
         # Load patterns and feedback
         patterns = self.load_patterns()
         
-        # Update baby age if provided
+        # Calculate baby age (from birth date or provided age)
         if baby_age_months:
+            # Use provided age and update patterns
             patterns["baby_patterns"]["age_months"] = baby_age_months
             self.save_patterns(patterns)
-            
+            baby_age = baby_age_months
+        else:
+            # Calculate from birth date
+            baby_age = self.calculate_baby_age(target_date)
+            if baby_age is not None:
+                patterns["baby_patterns"]["age_months"] = baby_age
+                self.save_patterns(patterns)
+            else:
+                baby_age = patterns.get("baby_patterns", {}).get("age_months", -1)
+             
         yesterday_feedback = self.get_yesterday_feedback(target_date)
         
         # Generate plan content
-        print("Generating age-appropriate baby activities...")
+        print(f"Generating age-appropriate baby activities for {baby_age} months ({patterns['baby_patterns'].get('developmental_stage', 'unknown')} stage)...")
         plan_data = self.generate_baby_plan_with_zeroclaw(target_date, patterns, yesterday_feedback)
         
         # Create plan file
