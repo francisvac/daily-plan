@@ -157,33 +157,57 @@ class BabyPlanGenerator:
     
     def get_age_appropriate_activities(self, age_months, patterns):
         """Get age-appropriate activities based on baby's age"""
-        
         activities = {
-            0: {  # 0-3 months
-                "tummy_time": ["2-3 minutes on playmat", "on parent's chest", "during diaper changes"],
-                "reading": ["high contrast books", "black and white cards", "face-to-face reading"],
-                "play": ["gentle mobile watching", "soft rattle sounds", "mirrored play"]
+            -1: {  # Prenatal
+                "morning": ["belly_rubbing", "reading_stories", "gentle_music"],
+                "afternoon": ["mother_voice", "gentle_movement", "relaxation"],
+                "evening": ["calming_music", "bedtime_stories", "mother_bonding"]
             },
-            3: {  # 3-6 months
-                "tummy_time": ["5-10 minutes with toys", "propped on pillows", "during playtime"],
-                "reading": ["board books", "texture books", "rhyming stories"],
-                "play": ["activity gym", "sensory toys", "peek-a-boo games"]
+            0: {   # Newborn
+                "morning": ["gentle_touch", "skin_to_skin", "voice_soothing"],
+                "afternoon": ["swaddling", "white_noise", "gentle_rocking"],
+                "evening": ["bath_time", "massage", "bedtime_routine"]
             },
-            6: {  # 6-9 months
-                "tummy_time": ["10-15 minutes with reaching", "ball rolling", "toy exploration"],
-                "reading": ["lift-the-flap books", "animal books", "sound books"],
-                "play": ["sitting games", "crawling practice", "block stacking"]
+            1: {   # 1 month
+                "morning": ["tummy_time", "face_tracking", "gentle_play"],
+                "afternoon": ["sensory_stimulation", "baby_massage", "outdoor_time"],
+                "evening": ["quiet_time", "bedtime_routine", "gentle_soothing"]
             },
-            9: {  # 9-12 months
-                "tummy_time": ["crawling games", "pulling up practice", "cruising activities"],
-                "reading": ["picture books", "story books", "interactive books"],
-                "play": ["standing practice", "simple puzzles", "music making"]
+            3: {   # 3 months
+                "morning": ["tummy_time", "reaching_toys", "sensory_play"],
+                "afternoon": ["baby_gym", "mirror_play", "music_time"],
+                "evening": ["reading_time", "quiet_play", "bedtime_routine"]
+            },
+            6: {   # 6 months
+                "morning": ["tummy_time", "sitting_practice", "sensory_bins"],
+                "afternoon": ["baby_gym", "reading_books", "music_classes"],
+                "evening": ["quiet_play", "bedtime_stories", "gentle_soothing"]
+            },
+            9: {   # 9 months
+                "morning": ["crawling_practice", "stacking_toys", "sensory_play"],
+                "afternoon": ["pulling_up", "peek_a_boo", "music_time"],
+                "evening": ["quiet_time", "reading_books", "bedtime_routine"]
+            },
+            12: {  # 12 months
+                "morning": ["walking_practice", "stacking_blocks", "shape_sorters"],
+                "afternoon": ["simple_puzzles", "music_toys", "outdoor_play"],
+                "evening": ["quiet_time", "reading_books", "bedtime_routine"]
             }
         }
         
         # Find appropriate age range
-        age_range = max([k for k in activities.keys() if age_months >= k])
-        return activities[age_range]
+        if age_months < 0:
+            return activities[-1]
+        elif age_months == 0:
+            return activities[0]
+        else:
+            # Find the highest age key that's <= age_months
+            valid_ages = [k for k in activities.keys() if k <= age_months and k >= 0]
+            if valid_ages:
+                age_range = max(valid_ages)
+                return activities[age_range]
+            else:
+                return activities[0]  # Default to newborn
     
     def generate_baby_plan_with_zeroclaw(self, target_date, patterns, yesterday_feedback):
         """Generate baby plan using ZeroClaw AI"""
