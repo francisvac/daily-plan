@@ -293,42 +293,47 @@ For older babies: focus on sensory development, motor skills, cognitive activiti
         return self.generate_fallback_baby_plan(age_months, patterns, day_name)
     
     def generate_fallback_baby_plan(self, age_months, patterns, day_name):
-        """Generate basic baby plan without ZeroClaw"""
+        """Generate fallback baby plan when ZeroClaw is not available"""
         activities = self.get_age_appropriate_activities(age_months, patterns["baby_patterns"])
         
-        return {
+        # Adjust activity keys based on developmental stage
+        if age_months < 0:
+            # Prenatal activities
+            activity_keys = ["belly_rubbing", "reading_stories", "gentle_music"]
+        else:
+            # Postnatal activities
+            activity_keys = ["tummy_time", "reading", "sensory_play"]
+        
+        plan_data = {
             "baby_age": age_months,
-            "focus_areas": ["development", "sensory", "bonding"],
-            "morning_activities": {
-                "tummy_time": activities["tummy_time"][0],
-                "reading": activities["reading"][0],
-                "play": activities["play"][0]
-            },
-            "afternoon_activities": {
-                "tummy_time": activities["tummy_time"][1],
-                "reading": activities["reading"][1],
-                "sensory": activities["play"][1]
-            },
-            "evening_activities": {
-                "play": "Gentle play with soft toys",
-                "reading": "Bedtime story with cuddles",
-                "bedtime": "Bath, massage, and lullaby routine"
-            },
+            "developmental_stage": patterns["baby_patterns"].get("developmental_stage", "unknown"),
+            "focus_areas": ["bonding", "development", "comfort"],
+            "morning_activities": {},
+            "afternoon_activities": {},
+            "evening_activities": {},
             "feeding_schedule": {
-                "morning": "7:00 AM - Alert and hungry",
-                "midday": "11:30 AM - After morning activities",
-                "afternoon": "3:30 PM - Post-nap feeding",
-                "evening": "6:30 PM - Before dinner routine",
-                "night": "10:00 PM - Dream feed if needed"
+                "morning": "Regular feeding",
+                "midday": "Regular feeding", 
+                "afternoon": "Regular feeding",
+                "evening": "Regular feeding",
+                "night": "Regular feeding"
             },
             "sleep_schedule": {
-                "morning_nap": "9:00 AM - 2 hours",
-                "afternoon_nap": "1:00 PM - 2.5 hours", 
-                "evening_nap": "4:00 PM - 1 hour",
-                "night_sleep": "7:30 PM - Until morning"
+                "morning_nap": "Regular nap",
+                "afternoon_nap": "Regular nap",
+                "evening_nap": "Regular nap",
+                "night_sleep": "Regular bedtime"
             },
-            "reasoning": f"Age-appropriate activities for {age_months}-month-old baby on {day_name}"
+            "reasoning": f"Age-appropriate activities for {age_months} months old baby"
         }
+        
+        # Fill activities based on available keys
+        for period in ["morning", "afternoon", "evening"]:
+            for i, activity in enumerate(activity_keys):
+                if i < len(activities[period]):
+                    plan_data[f"{period}_activities"][activity] = activities[period][i]
+        
+        return plan_data
     
     def create_baby_plan_file(self, target_date, plan_data):
         """Create baby plan markdown file"""
