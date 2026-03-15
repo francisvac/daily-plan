@@ -366,8 +366,65 @@ Make activities specific, age-appropriate, and developmentally beneficial.
         print("  3. Run 'daily-plan feedback' in the evening")
         print("  4. System will learn and improve tomorrow's plan")
         
+        # Get historical feedback
+        historical_feedback = self.get_historical_feedback_from_memory(target_date)
+        if historical_feedback:
+            print()
+            print(historical_feedback)
+        
         # Send email if configured
         self.send_email_if_configured(target_date, plan_file)
+    
+    def get_historical_feedback_from_memory(self, target_date):
+        """Query historical feedback from memory file"""
+        try:
+            memory_file = self.plan_dir / "memory_entries.json"
+            if memory_file.exists():
+                with open(memory_file, 'r') as f:
+                    memory_data = json.load(f)
+                
+                # Get feedback from last 30 days
+                cutoff_date = target_date - timedelta(days=30)
+                historical_feedback = []
+                
+                for key, entry in memory_data.items():
+                    if key.startswith('baby_feedback_'):
+                        entry_date = datetime.fromisoformat(entry['timestamp']).date()
+                        if entry_date >= cutoff_date:
+                            historical_feedback.append(entry['feedback'])
+                
+                if historical_feedback:
+                    # Create summary
+                    enjoyed_activities = []
+                    disliked_activities = []
+                    sleep_ratings = []
+                    
+                    for feedback in historical_feedback:
+                        enjoyed_activities.extend(feedback.get('what_enjoyed', []))
+                        disliked_activities.extend(feedback.get('didnt_like', []))
+                        sleep_ratings.append(int(feedback.get('sleep_quality', '5')))
+                    
+                    avg_sleep = sum(sleep_ratings) / len(sleep_ratings) if sleep_ratings else 5
+                    
+                    summary = f"""
+Historical Feedback Summary (Last 30 Days):
+- Most Enjoyed Activities: {list(set(enjoyed_activities))[:3]}
+- Common Dislikes: {list(set(disliked_activities))[:3]}
+- Average Sleep Quality: {avg_sleep:.1f}/10
+- Total Feedback Entries: {len(historical_feedback)}
+
+Key Patterns:
+- Baby consistently enjoys: {', '.join(list(set(enjoyed_activities))[:2])}
+- Baby dislikes: {', '.join(list(set(disliked_activities))[:2])}
+- Sleep trends: {'Good' if avg_sleep >= 7 else 'Needs attention'}
+"""
+                    return summary.strip()
+                else:
+                    return "No historical feedback available in the last 30 days."
+                    
+        except Exception as e:
+            print(f"❌ Error reading memory file: {e}")
+            return None
     
     def send_email_if_configured(self, target_date, plan_file):
         """Send email if email is configured"""

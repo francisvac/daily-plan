@@ -221,6 +221,44 @@ class EmailFeedbackProcessor:
                                 # Extract feedback
                                 feedback = self.extract_feedback_from_email(email_message)
                                 
+                                # Store feedback in ZeroClaw memory and file
+                                result = subprocess.run([
+                                    'zeroclaw', 'memory', 'list', 
+                                    '--key', f'baby_feedback_{plan_date}' 
+                                ], capture_output=True, text=True, timeout=30)
+                                
+                                if result.returncode == 0:
+                                    print(f"✅ Feedback stored in ZeroClaw memory for {plan_date}")
+                                    print(f"Memory entry: baby_feedback_{plan_date}")
+                                else:
+                                    print(f"⚠️ Warning: Could not store feedback in memory: {result.stderr}")
+                                
+                                # Also store in a readable file for backup and query
+                                memory_file = self.plan_dir / "memory_entries.json"
+                                memory_data = {}
+                                if memory_file.exists():
+                                    with open(memory_file, 'r') as f:
+                                        memory_data = json.load(f)
+                                
+                                memory_data[f'baby_feedback_{plan_date}'] = {
+                                    'timestamp': datetime.now().isoformat(),
+                                    'feedback': feedback,
+                                    'analysis': {
+                                        'what_enjoyed': feedback.get('what_enjoyed', []),
+                                        'didnt_like': feedback.get('didnt_like', []),
+                                        'sleep_quality': feedback.get('sleep_quality', '5'),
+                                        'feeding_response': feedback.get('feeding_response', 'Not specified'),
+                                        'developmental': feedback.get('developmental', []),
+                                        'preferences': self.generate_focus_areas(feedback),
+                                        'schedule_adjustments': self.suggest_schedule_adjustments(feedback)
+                                    }
+                                }
+                                
+                                with open(memory_file, 'w') as f:
+                                    json.dump(memory_data, f, indent=2)
+                                
+                                print(f"✅ Feedback also stored in memory_entries.json file")
+                                
                                 # Apply to plan
                                 if self.apply_feedback_to_plan(plan_date, feedback):
                                     # Mark as processed
