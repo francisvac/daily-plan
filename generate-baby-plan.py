@@ -341,57 +341,64 @@ For older babies: focus on sensory development, motor skills, cognitive activiti
         with open(self.template_file, 'r') as f:
             template = f.read()
         
+        # Determine activity type based on developmental stage
+        is_prenatal = plan_data.get("baby_age", -1) < 0
+        
         # Replace template variables
         replacements = {
             '{{DATE}}': target_date.strftime('%Y-%m-%d'),
-            '{{DAY_OF_WEEK}}': target_date.strftime('%A'),
-            '{{TIMESTAMP}}': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            '{{BABY_AGE}}': f"{plan_data['baby_age']} months",
+            '{{DAY_NAME}}': target_date.strftime('%A'),
+            '{{BABY_AGE}}': f"{plan_data['baby_age']} months ({plan_data.get('developmental_stage', 'unknown')} stage)",
             '{{FOCUS_AREAS}}': ', '.join(plan_data['focus_areas']),
-            
-            # Morning activities
-            '{{MORNING_TUMMY}}': plan_data['morning_activities']['tummy_time'],
-            '{{MORNING_READING}}': plan_data['morning_activities']['reading'],
-            '{{MORNING_PLAY}}': plan_data['morning_activities']['play'],
-            
-            # Afternoon activities
-            '{{AFTERNOON_TUMMY}}': plan_data['afternoon_activities']['tummy_time'],
-            '{{AFTERNOON_READING}}': plan_data['afternoon_activities']['reading'],
-            '{{AFTERNOON_SENSORY}}': plan_data['afternoon_activities']['sensory'],
-            
-            # Evening activities
-            '{{EVENING_PLAY}}': plan_data['evening_activities']['play'],
-            '{{EVENING_READING}}': plan_data['evening_activities']['reading'],
-            '{{BEDTIME_ROUTINE}}': plan_data['evening_activities']['bedtime'],
-            
-            # Feeding schedule
-            '{{MORNING_FEEDING}}': plan_data['feeding_schedule']['morning'],
-            '{{MIDDAY_FEEDING}}': plan_data['feeding_schedule']['midday'],
-            '{{AFTERNOON_FEEDING}}': plan_data['feeding_schedule']['afternoon'],
-            '{{EVENING_FEEDING}}': plan_data['feeding_schedule']['evening'],
-            '{{NIGHT_FEEDING}}': plan_data['feeding_schedule']['night'],
-            
-            # Sleep schedule
-            '{{MORNING_NAP}}': plan_data['sleep_schedule']['morning_nap'],
-            '{{AFTERNOON_NAP}}': plan_data['sleep_schedule']['afternoon_nap'],
-            '{{EVENING_NAP}}': plan_data['sleep_schedule']['evening_nap'],
-            '{{NIGHT_SLEEP}}': plan_data['sleep_schedule']['night_sleep'],
         }
+        
+        # Handle activity replacements based on developmental stage
+        if is_prenatal:
+            # Prenatal activities
+            replacements.update({
+                '{{MORNING_TUMMY}}': plan_data['morning_activities'].get('belly_rubbing', 'Gentle belly rubbing'),
+                '{{MORNING_READING}}': plan_data['morning_activities'].get('reading_stories', 'Read stories to baby'),
+                '{{MORNING_PLAY}}': plan_data['morning_activities'].get('gentle_music', 'Play gentle music'),
+                '{{AFTERNOON_TUMMY}}': plan_data['afternoon_activities'].get('mother_voice', 'Talk to baby with mother voice'),
+                '{{AFTERNOON_READING}}': plan_data['afternoon_activities'].get('gentle_movement', 'Gentle movement exercises'),
+                '{{AFTERNOON_SENSORY}}': plan_data['afternoon_activities'].get('relaxation', 'Relaxation time'),
+                '{{EVENING_PLAY}}': plan_data['evening_activities'].get('calming_music', 'Calming music'),
+                '{{EVENING_READING}}': plan_data['evening_activities'].get('bedtime_stories', 'Bedtime stories'),
+                '{{EVENING_BEDTIME}}': plan_data['evening_activities'].get('mother_bonding', 'Mother-baby bonding'),
+            })
+        else:
+            # Postnatal activities
+            replacements.update({
+                '{{MORNING_TUMMY}}': plan_data['morning_activities'].get('tummy_time', 'Tummy time'),
+                '{{MORNING_READING}}': plan_data['morning_activities'].get('reading', 'Reading time'),
+                '{{MORNING_PLAY}}': plan_data['morning_activities'].get('play', 'Play time'),
+                '{{AFTERNOON_TUMMY}}': plan_data['afternoon_activities'].get('tummy_time', 'Tummy time'),
+                '{{AFTERNOON_READING}}': plan_data['afternoon_activities'].get('reading', 'Reading time'),
+                '{{AFTERNOON_SENSORY}}': plan_data['afternoon_activities'].get('sensory', 'Sensory play'),
+                '{{EVENING_PLAY}}': plan_data['evening_activities'].get('play', 'Play time'),
+                '{{EVENING_READING}}': plan_data['evening_activities'].get('reading', 'Reading time'),
+                '{{EVENING_BEDTIME}}': plan_data['evening_activities'].get('bedtime', 'Bedtime routine'),
+            })
+        
+        # Add schedule replacements
+        schedule_keys = ['morning', 'midday', 'afternoon', 'evening', 'night']
+        for key in schedule_keys:
+            replacements[f'{{FEEDING_{key.upper()}}}'] = plan_data['feeding_schedule'].get(key, 'Regular feeding')
+        
+        sleep_keys = ['morning_nap', 'afternoon_nap', 'evening_nap', 'night_sleep']
+        for key in sleep_keys:
+            replacements[f'{{SLEEP_{key.upper()}}}'] = plan_data['sleep_schedule'].get(key, 'Regular sleep')
         
         # Apply replacements
         content = template
         for placeholder, value in replacements.items():
-            content = content.replace(placeholder, value)
-        
-        # Fill remaining placeholders
-        import re
-        content = re.sub(r'\{\{[^}]+\}\}', 'TBD', content)
+            content = content.replace(placeholder, str(value))
         
         # Write plan file
         plan_file = self.plan_dir / f"{target_date.strftime('%Y-%m-%d')}-plan.md"
         with open(plan_file, 'w') as f:
             f.write(content)
-            
+        
         return plan_file
     
     def generate(self, date_str=None, baby_age_months=None):
