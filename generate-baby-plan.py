@@ -112,28 +112,40 @@ class BabyPlanGenerator:
         return match.group(1).strip() if match else "Normal"
     
     def calculate_baby_age(self, target_date):
-        """Calculate baby's age in months based on birth date"""
+        """Calculate baby's age in months and days based on birth date"""
         patterns = self.load_patterns()
         birth_date_str = patterns.get("baby_patterns", {}).get("birth_date")
         
         if birth_date_str:
             try:
                 birth_date = datetime.strptime(birth_date_str, '%Y-%m-%d').date()
-                # Calculate months difference
-                years_diff = target_date.year - birth_date.year
-                months_diff = target_date.month - birth_date.month
+                # Calculate days difference
+                days_diff = (target_date - birth_date).days
                 
-                total_months = years_diff * 12 + months_diff
-                
-                # Adjust for day of month
-                if target_date.day < birth_date.day:
-                    total_months -= 1
-                
-                return total_months
+                # Calculate months and days
+                if days_diff < 30:
+                    return 0  # Newborn stage
+                else:
+                    months = days_diff // 30
+                    return months
             except ValueError:
                 print(f"Warning: Invalid birth date format: {birth_date_str}")
                 return None
         return patterns.get("baby_patterns", {}).get("age_months", -1)
+    
+    def calculate_baby_age_days(self, target_date):
+        """Calculate baby's exact age in days"""
+        patterns = self.load_patterns()
+        birth_date_str = patterns.get("baby_patterns", {}).get("birth_date")
+        
+        if birth_date_str:
+            try:
+                birth_date = datetime.strptime(birth_date_str, '%Y-%m-%d').date()
+                return (target_date - birth_date).days
+            except ValueError:
+                print(f"Warning: Invalid birth date format: {birth_date_str}")
+                return None
+        return 0
     
     def calculate_activity_success(self, content):
         try:
@@ -414,7 +426,7 @@ For older babies: focus on sensory development, motor skills, cognitive activiti
         replacements = {
             '{{DATE}}': target_date.strftime('%Y-%m-%d'),
             '{{DAY_OF_WEEK}}': target_date.strftime('%A'),
-            '{{BABY_AGE}}': f"{plan_data['baby_age']} months ({plan_data.get('developmental_stage', 'unknown')} stage)" if plan_data['baby_age'] > 0 else f"{plan_data['baby_age'] * 30} days ({plan_data.get('developmental_stage', 'unknown')} stage)",
+            '{{BABY_AGE}}': f"{plan_data['baby_age']} months ({plan_data.get('developmental_stage', 'unknown')} stage)" if plan_data['baby_age'] > 0 else f"{self.calculate_baby_age_days(target_date)} days ({plan_data.get('developmental_stage', 'unknown')} stage)",
             '{{FOCUS_AREAS}}': ', '.join(plan_data['focus_areas']),
             '{{TIMESTAMP}}': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         }
@@ -518,7 +530,7 @@ For older babies: focus on sensory development, motor skills, cognitive activiti
         print()
         print("Baby Plan Summary:")
         if plan_data['baby_age'] == 0:
-            print(f"  Baby Age: {plan_data['baby_age'] * 30} days ({plan_data.get('developmental_stage', 'unknown')} stage)")
+            print(f"  Baby Age: {self.calculate_baby_age_days(target_date)} days ({plan_data.get('developmental_stage', 'unknown')} stage)")
         else:
             print(f"  Baby Age: {plan_data['baby_age']} months ({plan_data.get('developmental_stage', 'unknown')} stage)")
         print(f"  Focus: {', '.join(plan_data['focus_areas'])}")
