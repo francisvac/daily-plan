@@ -1,50 +1,6 @@
 {
   "baby_patterns": {
-    "birth_date": "2025-03-17",
-    "age_months": 0,
-    "developmental_stage": "newborn",
-    "favorite_activities": [
-      "gentle_touch",
-      "skin_to_skin",
-      "voice_soothing",
-      "swaddling"
-    ],
-    "sleep_schedule": {
-      "morning_nap": "9:00 AM",
-      "afternoon_nap": "1:00 PM",
-      "evening_nap": "4:00 PM",
-      "night_bedtime": "7:30 PM"
-    },
-    "feeding_schedule": {
-      "morning": "7:00 AM",
-      "midday": "11:30 AM",
-      "afternoon": "3:30 PM",
-      "evening": "6:30 PM",
-      "night": "10:00 PM"
-    },
-    "preferred_activity_times": [
-      "morning",
-      "afternoon",
-      "evening"
-    ],
-    "favorite_reading_times": [
-      "morning",
-      "before_mother_rest",
-      "bedtime"
-    ],
-    "comfort_patterns": {
-      "soothing_techniques": [
-        "gentle_touch",
-        "skin_to_skin",
-        "voice_soothing",
-        "swaddling"
-      ],
-      "optimal_environment": [
-        "quiet",
-        "warm",
-        "dim_lighting"
-      ]
-    }
+    "age_months": 5
   },
   "patterns": {
     "energy_levels": {

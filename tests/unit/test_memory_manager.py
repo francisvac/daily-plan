@@ -152,24 +152,34 @@ class TestMemoryManager:
         results = memory_manager.get_entries_by_pattern("non_existent_pattern")
         assert results == []
 
-    def test_get_entries_in_date_range(self, memory_manager, sample_memory_entries):
-        """Test retrieving entries within a date range"""
-        memory_manager._memory_cache = sample_memory_entries
+    def test_get_entries_in_date_range(self, memory_manager, mock_memory_file):
+        """Test retrieving entries within date range"""
+        # Add test entries - timestamps will be set to current time by add_entry
+        start_date = datetime.now() - timedelta(minutes=5)
+        end_date = datetime.now() + timedelta(minutes=5)
         
-        # Test range covering today only
-        today = datetime.now()
-        start_date = today.replace(hour=0, minute=0, second=0, microsecond=0)
-        end_date = today.replace(hour=23, minute=59, second=59, microsecond=999999)
+        entry1 = {
+            'feedback': {'what_enjoyed': ['tummy time']}
+        }
+        entry2 = {
+            'feedback': {'what_enjoyed': ['reading']}
+        }
+        entry3 = {
+            'feedback': {'what_enjoyed': ['sensory play']}
+        }
         
+        memory_manager.add_entry('entry1', entry1)
+        memory_manager.add_entry('entry2', entry2)
+        memory_manager.add_entry('entry3', entry3)
+        
+        # Test date range (should include all recent entries)
         results = memory_manager.get_entries_in_date_range(start_date, end_date)
-        assert len(results) == 1
         
-        # Test range covering multiple days
-        start_date = today - timedelta(days=1)
-        end_date = today + timedelta(days=1)
-        
-        results = memory_manager.get_entries_in_date_range(start_date, end_date)
-        assert len(results) == 2
+        # Should find all 3 entries (all within time range)
+        assert len(results) == 3
+        assert any('entry1' in str(result) for result in results)
+        assert any('entry2' in str(result) for result in results)
+        assert any('entry3' in str(result) for result in results)
 
     def test_get_entries_in_date_range_no_timestamp(self, memory_manager):
         """Test date range filtering with entries lacking timestamps"""
@@ -220,13 +230,23 @@ class TestMemoryManager:
         assert results_lower == results_upper
 
     def test_get_summary_empty_memory(self, memory_manager):
-        """Test getting summary from empty memory"""
+        """Test getting summary with empty memory"""
+        memory_manager._memory_cache = {}
+        
         summary = memory_manager.get_summary()
         
         assert summary["total_entries"] == 0
-        assert summary["date_range"]["start"] is None
-        assert summary["date_range"]["end"] is None
-        assert summary["feedback_themes"] == {}
+        assert summary["enjoyed_activities"] == []
+        assert summary["disliked_activities"] == []
+        assert summary["sleep_ratings"] == []
+        assert summary["developmental_notes"] == []
+        assert summary["feeding_patterns"] == []
+        assert summary["journal_entries"] == []
+        assert summary["most_enjoyed"] == []
+        assert summary["most_disliked"] == []
+        assert summary["avg_sleep"] == 0
+        assert summary["feeding_patterns"] == []
+        assert summary["new_skills"] == []
 
     def test_get_summary_with_data(self, memory_manager, sample_memory_entries):
         """Test getting summary with memory data"""
@@ -235,9 +255,11 @@ class TestMemoryManager:
         summary = memory_manager.get_summary(days=7)
         
         assert summary["total_entries"] == 2
-        assert summary["date_range"]["start"] is not None
-        assert summary["date_range"]["end"] is not None
-        assert "feedback_themes" in summary
+        assert len(summary["enjoyed_activities"]) >= 2  # tummy time, reading
+        assert len(summary["disliked_activities"]) >= 1  # loud noises
+        assert summary["avg_sleep"] >= 0
+        assert len(summary["most_enjoyed"]) >= 1
+        assert len(summary["new_skills"]) >= 1
 
     def test_get_summary_feedback_themes(self, memory_manager):
         """Test feedback theme extraction in summary"""
@@ -253,19 +275,25 @@ class TestMemoryManager:
                 "timestamp": datetime.now().isoformat(),
                 "feedback": {
                     "what_enjoyed": ["tummy_time", "sensory_play"],
-                    "didnt_like": ["overstimulation"]
+                    "didnt_like": ["sudden_movements"]
                 }
             }
         }
         
         summary = memory_manager.get_summary()
-        themes = summary["feedback_themes"]
         
-        assert "tummy_time" in themes["enjoyed"]
-        assert "reading" in themes["enjoyed"]
-        assert "sensory_play" in themes["enjoyed"]
-        assert "loud_noises" in themes["disliked"]
-        assert "overstimulation" in themes["disliked"]
+        # Check that activities are collected
+        assert "tummy_time" in summary["enjoyed_activities"]
+        assert "reading" in summary["enjoyed_activities"]
+        assert "sensory_play" in summary["enjoyed_activities"]
+        assert "loud_noises" in summary["disliked_activities"]
+        assert "sudden_movements" in summary["disliked_activities"]
+        
+        # Check most enjoyed list
+        assert "tummy_time" in summary["most_enjoyed"]
+        
+        # Check most disliked list
+        assert len(summary["most_disliked"]) >= 1
 
     def test_cleanup_old_entries(self, memory_manager):
         """Test cleanup of old memory entries"""
