@@ -1,0 +1,152 @@
+{
+  "baby_patterns": {
+    "birth_date": "2025-01-15",
+    "age_months": 2,
+    "developmental_stage": "infant",
+    "favorite_activities": [
+      "tummy_time",
+      "reading",
+      "sensory_play",
+      "gentle_touch"
+    ],
+    "avoid_activities": [
+      "loud_noises",
+      "sudden_movements",
+      "overstimulation"
+    ],
+    "sleep_schedule": {
+      "morning_nap": "9:00 AM",
+      "afternoon_nap": "1:00 PM",
+      "evening_nap": "4:00 PM",
+      "night_bedtime": "8:30 PM"
+    },
+    "feeding_schedule": {
+      "morning": "7:00 AM",
+      "midday": "11:30 AM",
+      "afternoon": "3:30 PM",
+      "evening": "6:30 PM",
+      "night": "10:00 PM"
+    },
+    "preferred_activity_times": [
+      "morning",
+      "afternoon",
+      "evening"
+    ],
+    "favorite_reading_times": [
+      "morning",
+      "before_mother_rest",
+      "bedtime"
+    ],
+    "comfort_patterns": {
+      "soothing_techniques": [
+        "gentle_touch",
+        "skin_to_skin",
+        "voice_soothing",
+        "swaddling"
+      ],
+      "optimal_environment": [
+        "quiet",
+        "warm",
+        "dim_lighting"
+      ]
+    }
+  },
+  "patterns": {
+    "energy_levels": {
+      "morning_peak": "9:00 AM",
+      "afternoon_peak": "2:00 PM",
+      "evening_peak": "6:00 PM",
+      "overall_pattern": "biphasic"
+    },
+    "task_preferences": {
+      "preferred_task_types": ["sensory", "motor", "quiet"],
+      "avoid_task_types": ["loud", "sudden"],
+      "complex_task_times": ["morning"],
+      "quick_task_times": ["evening"]
+    },
+    "completion_patterns": {
+      "high_completion_days": ["Monday", "Wednesday", "Friday"],
+      "low_completion_days": ["Tuesday", "Thursday"],
+      "seasonal_patterns": {
+        "winter": "more_indoor_activities",
+        "summer": "more_outdoor_time"
+      },
+      "weekly_patterns": {
+        "beginning_of_week": "high_energy",
+        "end_of_week": "lower_energy"
+      }
+    },
+    "feedback_themes": {
+      "what_works": [
+        "gentle_touch",
+        "voice_soothing",
+        "quiet_environment",
+        "consistent_routine"
+      ],
+      "what_doesnt_work": [
+        "loud_noises",
+        "sudden_movements",
+        "overstimulation",
+        "inconsistent_timing"
+      ],
+      "common_obstacles": [
+        "overstimulation",
+        "hunger",
+        "tiredness",
+        "environmental_changes"
+      ],
+      "success_factors": [
+        "quiet_environment",
+        "baby_well_fed",
+        "baby_well_rested",
+        "consistent_routine"
+      ]
+    },
+    "productivity_insights": {
+      "optimal_task_count": 6,
+      "best_task_duration": 20,
+      "break_frequency": "2_hours",
+      "focus_session_length": 15
+    }
+  },
+  "history": {
+    "plans_generated": 25,
+    "feedback_processed": 20,
+    "accuracy_score": 0.88,
+    "last_updated": "2025-03-22T10:30:00",
+    "learning_events": [
+      {
+        "date": "2025-03-20",
+        "type": "preference_identified",
+        "description": "tummy_time identified as favorite activity"
+      },
+      {
+        "date": "2025-03-21", 
+        "type": "schedule_optimization",
+        "description": "bedtime adjusted to 8:30 PM for better sleep"
+      }
+    ]
+  },
+  "user_preferences": {
+    "morning_start_time": "08:00",
+    "evening_end_time": "21:00",
+    "preferred_task_count": 6,
+    "break_frequency": "2_hours",
+    "focus_areas": ["motor_skills", "sensory_development", "visual_tracking"],
+    "avoid_areas": ["loud_stimuli", "overstimulation"],
+    "communication_style": "gentle",
+    "adaptation_speed": "moderate"
+  },
+  "accuracy_tracking": {
+    "prediction_accuracy": {
+      "activities": 0.92,
+      "timing": 0.85,
+      "duration": 0.78
+    },
+    "feedback_quality": {
+      "detailed": 0.95,
+      "consistent": 0.88,
+      "actionable": 0.82
+    }
+  }
+}
