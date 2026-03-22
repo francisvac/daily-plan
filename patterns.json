@@ -11,13 +11,13 @@
     ],
     "sleep_schedule": {
       "morning_nap": "9:00 AM",
-      "afternoon_nap": "1:00 PM", 
+      "afternoon_nap": "1:00 PM",
       "evening_nap": "4:00 PM",
       "night_bedtime": "7:30 PM"
     },
     "feeding_schedule": {
       "morning": "7:00 AM",
-      "midday": "11:30 AM", 
+      "midday": "11:30 AM",
       "afternoon": "3:30 PM",
       "evening": "6:30 PM",
       "night": "10:00 PM"
