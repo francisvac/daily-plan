@@ -414,7 +414,7 @@ For older babies: focus on sensory development, motor skills, cognitive activiti
         replacements = {
             '{{DATE}}': target_date.strftime('%Y-%m-%d'),
             '{{DAY_OF_WEEK}}': target_date.strftime('%A'),
-            '{{BABY_AGE}}': f"{plan_data['baby_age']} months ({plan_data.get('developmental_stage', 'unknown')} stage)",
+            '{{BABY_AGE}}': f"{plan_data['baby_age']} months ({plan_data.get('developmental_stage', 'unknown')} stage)" if plan_data['baby_age'] > 0 else f"{plan_data['baby_age'] * 30} days ({plan_data.get('developmental_stage', 'unknown')} stage)",
             '{{FOCUS_AREAS}}': ', '.join(plan_data['focus_areas']),
             '{{TIMESTAMP}}': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         }

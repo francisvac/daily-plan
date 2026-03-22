@@ -205,10 +205,17 @@ class EmailCommandProcessor:
         
         if key in memory:
             entry = memory[key]
+            # Calculate days old for newborn
+            entry_date = datetime.fromisoformat(entry['timestamp'])
+            today = datetime.now()
+            days_old = (today - entry_date).days
+            
+            age_display = f"{days_old} days old" if days_old > 0 else "Newborn"
+            
             return f"""📅 Today's Memory ({date})
 ========================
 
-👶 Baby's Day:
+👶 Baby's Day ({age_display}):
 - Enjoyed: {', '.join(entry['feedback'].get('what_enjoyed', []))}
 - Disliked: {', '.join(entry['feedback'].get('didnt_like', []))}
 - Sleep Quality: {entry['feedback'].get('sleep_quality', 'N/A')}/10
@@ -218,10 +225,8 @@ class EmailCommandProcessor:
 {chr(10).join(f"- {note}" for note in entry['feedback'].get('developmental', []))}
 
 📔 Parent Journal:
-{chr(10).join(f"- {note}" for note in entry.get('parent_journal', []))}
+{chr(10).join(f"- {note}" for note in entry.get('journal_entries', []))}
 """
-        else:
-            return f"📅 No memory entries found for {date}"
     
     def get_week_memory(self):
         """Get last 7 days memory summary"""
