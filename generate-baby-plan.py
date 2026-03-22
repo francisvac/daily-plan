@@ -517,7 +517,10 @@ For older babies: focus on sensory development, motor skills, cognitive activiti
         print(f"✅ Baby plan generated: {plan_file}")
         print()
         print("Baby Plan Summary:")
-        print(f"  Baby Age: {plan_data['baby_age']} months")
+        if plan_data['baby_age'] == 0:
+            print(f"  Baby Age: {plan_data['baby_age'] * 30} days ({plan_data.get('developmental_stage', 'unknown')} stage)")
+        else:
+            print(f"  Baby Age: {plan_data['baby_age']} months ({plan_data.get('developmental_stage', 'unknown')} stage)")
         print(f"  Focus: {', '.join(plan_data['focus_areas'])}")
         print(f"  Tummy Time: {len([k for k in plan_data.keys() if 'tummy' in k])} sessions")
         print(f"  Reading Time: {len([k for k in plan_data.keys() if 'reading' in k])} sessions")
