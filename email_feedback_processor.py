@@ -54,7 +54,7 @@ class EmailFeedbackProcessor:
         return mail
     
     def extract_feedback_from_email(self, email_message):
-        """Extract baby feedback from email content"""
+        """Extract baby feedback and journal from email content"""
         # Extract email body
         if email_message.is_multipart():
             for part in email_message.walk():
@@ -63,6 +63,9 @@ class EmailFeedbackProcessor:
                     break
         else:
             body = email_message.get_payload(decode=True).decode()
+        
+        # Check for journal entries
+        journal_entries = self.extract_journal_entries(body)
         
         # Parse feedback using patterns
         feedback = {
@@ -73,7 +76,26 @@ class EmailFeedbackProcessor:
             'developmental': self.extract_section(body, ['developmental', 'milestone', 'new skill', 'learned'])
         }
         
-        return feedback
+        return {
+            'feedback': feedback,
+            'journal_entries': journal_entries
+        }
+    
+    def extract_journal_entries(self, text):
+        """Extract journal entries from email content"""
+        lines = text.split('\n')
+        journal_entries = []
+        
+        for line in lines:
+            line_lower = line.lower()
+            # Look for journal keywords
+            if any(keyword in line_lower for keyword in ['journal', 'note', 'thought', 'feeling', 'observation']):
+                # Clean up the line
+                clean_line = re.sub(r'^[-*•]\s*', '', line.strip())
+                if clean_line and len(clean_line) > 3:
+                    journal_entries.append(clean_line)
+        
+        return journal_entries[:5]  # Limit to 5 entries
     
     def extract_section(self, text, keywords):
         """Extract relevant sentences based on keywords"""
@@ -104,8 +126,8 @@ class EmailFeedbackProcessor:
                         return rating
         return "5"  # Default rating
     
-    def apply_feedback_to_plan(self, date, feedback):
-        """Apply extracted feedback to the plan file"""
+    def apply_feedback_to_plan(self, date, feedback_data):
+        """Apply extracted feedback and journal to plan file"""
         plan_file = self.plan_dir / f"{date}-plan.md"
         
         if not plan_file.exists():
@@ -115,6 +137,9 @@ class EmailFeedbackProcessor:
         # Read current plan
         with open(plan_file, 'r') as f:
             content = f.read()
+        
+        feedback = feedback_data.get('feedback', {})
+        journal_entries = feedback_data.get('journal_entries', [])
         
         # Update feedback sections
         content = self.update_feedback_section(content, '### What Baby Enjoyed Most ✅', feedback['what_enjoyed'])
@@ -137,11 +162,20 @@ class EmailFeedbackProcessor:
                 content
             )
         
+        # Add journal entries
+        if journal_entries:
+            journal_section = '\n'.join([f"- {entry}" for entry in journal_entries])
+            content = re.sub(
+                r'### Parent Journal Notes 📔\s*\n\s*- {{PARENT_JOURNAL_1}}\s*\n\s*- {{PARENT_JOURNAL_2}}\s*\n\s*- {{PARENT_JOURNAL_3}}',
+                f'### Parent Journal Notes 📔\n{journal_section}',
+                content
+            )
+        
         # Save updated plan
         with open(plan_file, 'w') as f:
             f.write(content)
         
-        print(f"✅ Applied feedback to plan for {date}")
+        print(f"✅ Applied feedback and journal to plan for {date}")
         return True
     
     def update_feedback_section(self, content, section_header, feedback_items):
@@ -219,7 +253,8 @@ class EmailFeedbackProcessor:
                                 print(f"📧 Processing feedback for {plan_date}")
                                 
                                 # Extract feedback
-                                feedback = self.extract_feedback_from_email(email_message)
+                                feedback = extracted_data['feedback']
+                                journal_entries = extracted_data.get('journal_entries', [])
                                 
                                 # Store feedback in ZeroClaw memory and file
                                 result = subprocess.run([
@@ -243,6 +278,7 @@ class EmailFeedbackProcessor:
                                 memory_data[f'baby_feedback_{plan_date}'] = {
                                     'timestamp': datetime.now().isoformat(),
                                     'feedback': feedback,
+                                    'journal_entries': journal_entries,
                                     'analysis': {
                                         'what_enjoyed': feedback.get('what_enjoyed', []),
                                         'didnt_like': feedback.get('didnt_like', []),

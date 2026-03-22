@@ -335,6 +335,69 @@ For older babies: focus on sensory development, motor skills, cognitive activiti
         
         return plan_data
     
+    def get_memory_summary(self, target_date):
+        """Get memory summary for last 7 days"""
+        try:
+            memory_file = self.plan_dir / "memory_entries.json"
+            if memory_file.exists():
+                with open(memory_file, 'r') as f:
+                    memory_data = json.load(f)
+                
+                # Get feedback from last 7 days
+                cutoff_date = target_date - timedelta(days=7)
+                summary = {
+                    'most_enjoyed': [],
+                    'most_disliked': [],
+                    'avg_sleep': 0,
+                    'feeding_patterns': [],
+                    'new_skills': [],
+                    'progressing_skills': [],
+                    'milestones': []
+                }
+                
+                sleep_ratings = []
+                for key, entry in memory_data.items():
+                    if key.startswith('baby_feedback_'):
+                        entry_date = datetime.fromisoformat(entry['timestamp']).date()
+                        if entry_date >= cutoff_date:
+                            feedback = entry['feedback']
+                            
+                            # Collect data
+                            summary['most_enjoyed'].extend(feedback.get('what_enjoyed', []))
+                            summary['most_disliked'].extend(feedback.get('didnt_like', []))
+                            
+                            if feedback.get('sleep_quality'):
+                                try:
+                                    sleep_ratings.append(int(feedback['sleep_quality']))
+                                except ValueError:
+                                    pass
+                            
+                            summary['feeding_patterns'].extend(feedback.get('feeding_response', []))
+                            summary['new_skills'].extend(feedback.get('developmental', []))
+                
+                # Process summary
+                summary['most_enjoyed'] = list(set(summary['most_enjoyed']))[:5]
+                summary['most_disliked'] = list(set(summary['most_disliked']))[:3]
+                summary['avg_sleep'] = sum(sleep_ratings) / len(sleep_ratings) if sleep_ratings else 0
+                summary['feeding_patterns'] = list(set(summary['feeding_patterns']))[:2]
+                summary['new_skills'] = list(set(summary['new_skills']))[:2]
+                
+                return summary
+            else:
+                return {
+                    'most_enjoyed': [],
+                    'most_disliked': [],
+                    'avg_sleep': 0,
+                    'feeding_patterns': [],
+                    'new_skills': [],
+                    'progressing_skills': [],
+                    'milestones': []
+                }
+                    
+        except Exception as e:
+            print(f"❌ Error reading memory file: {e}")
+            return None
+    
     def create_baby_plan_file(self, target_date, plan_data):
         """Create baby plan markdown file"""
         # Read template
@@ -344,13 +407,28 @@ For older babies: focus on sensory development, motor skills, cognitive activiti
         # Determine activity type based on developmental stage
         is_prenatal = plan_data.get("baby_age", -1) < 0
         
+        # Get memory summary for last 7 days
+        memory_summary = self.get_memory_summary(target_date)
+        
         # Replace template variables
         replacements = {
             '{{DATE}}': target_date.strftime('%Y-%m-%d'),
-            '{{DAY_NAME}}': target_date.strftime('%A'),
+            '{{DAY_OF_WEEK}}': target_date.strftime('%A'),
             '{{BABY_AGE}}': f"{plan_data['baby_age']} months ({plan_data.get('developmental_stage', 'unknown')} stage)",
             '{{FOCUS_AREAS}}': ', '.join(plan_data['focus_areas']),
+            '{{TIMESTAMP}}': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         }
+        
+        # Add memory summary replacements
+        replacements.update({
+            '{{TOP_ENJOYED}}': ', '.join(memory_summary.get('most_enjoyed', [])[:3]),
+            '{{TOP_DISLIKED}}': ', '.join(memory_summary.get('most_disliked', [])[:2]),
+            '{{AVG_SLEEP}}': f"{memory_summary.get('avg_sleep', 0):.1f}",
+            '{{FEEDING_TRENDS}}': ', '.join(memory_summary.get('feeding_patterns', [])[:2]),
+            '{{NEW_SKILLS}}': ', '.join(memory_summary.get('new_skills', [])[:2]),
+            '{{PROGRESSING_SKILLS}}': ', '.join(memory_summary.get('progressing_skills', [])[:2]),
+            '{{MILESTONES}}': ', '.join(memory_summary.get('milestones', [])[:2]),
+        })
         
         # Handle activity replacements based on developmental stage
         if is_prenatal:

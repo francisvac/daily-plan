@@ -1,22 +1,26 @@
 {
   "baby_patterns": {
     "birth_date": "2025-03-17",
-    "age_months": -1,
-    "developmental_stage": "prenatal",
+    "age_months": 0,
+    "developmental_stage": "newborn",
     "favorite_activities": [
-      "belly_rubbing",
-      "reading_stories",
-      "music_time",
-      "gentle_movement"
+      "gentle_touch",
+      "skin_to_skin",
+      "voice_soothing",
+      "swaddling"
     ],
     "sleep_schedule": {
-      "mother_rest": "9:00 PM - 6:00 AM",
-      "daytime_naps": "12:00 PM - 1:00 PM"
+      "morning_nap": "9:00 AM",
+      "afternoon_nap": "1:00 PM", 
+      "evening_nap": "4:00 PM",
+      "night_bedtime": "7:30 PM"
     },
     "feeding_schedule": {
-      "mother_nutrition": "Every 2-3 hours",
-      "hydration": "8 glasses daily",
-      "prenatal_vitamins": "With breakfast"
+      "morning": "7:00 AM",
+      "midday": "11:30 AM", 
+      "afternoon": "3:30 PM",
+      "evening": "6:30 PM",
+      "night": "10:00 PM"
     },
     "preferred_activity_times": [
       "morning",
@@ -30,15 +34,15 @@
     ],
     "comfort_patterns": {
       "soothing_techniques": [
-        "gentle_music",
-        "mother_voice",
-        "belly_rubs",
-        "calming_environment"
+        "gentle_touch",
+        "skin_to_skin",
+        "voice_soothing",
+        "swaddling"
       ],
       "optimal_environment": [
         "quiet",
-        "comfortable",
-        "temperature_controlled"
+        "warm",
+        "dim_lighting"
       ]
     }
   },

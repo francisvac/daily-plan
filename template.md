@@ -1,6 +1,6 @@
 # Baby Daily Plan - {{DATE}}
 
-## � Baby Context
+## 👶 Baby Context
 **Date:** {{DATE}}  
 **Day:** {{DAY_OF_WEEK}}  
 **Baby Age:** {{BABY_AGE}}  
@@ -52,13 +52,14 @@
 - [ ] {{COMPLETED_ACTIVITY_2}}
 - [ ] {{COMPLETED_ACTIVITY_3}}
 
-### Special Moments
-- {{SPECIAL_MOMENT_1}}
-- {{SPECIAL_MOMENT_2}}
+### Special Moments & Journal Notes
+- {{JOURNAL_NOTE_1}}
+- {{JOURNAL_NOTE_2}}
+- {{JOURNAL_NOTE_3}}
 
 ---
 
-## 📝 Baby Feedback Section
+## 📝 Baby Feedback & Journal Section
 
 ### What Baby Enjoyed Most ✅
 - {{BABY_ENJOYED_1}}
@@ -81,9 +82,30 @@
 - {{DEVELOPMENT_2}}
 - {{DEVELOPMENT_3}}
 
+### Parent Journal Notes 📔
+- {{PARENT_JOURNAL_1}}
+- {{PARENT_JOURNAL_2}}
+- {{PARENT_JOURNAL_3}}
+
 ---
 
-## 🔄 Tomorrow's Plan
+## � Memory & Pattern Summary
+*Auto-generated from your daily journal entries*
+
+### Recent Trends (Last 7 Days)
+- **Most Enjoyed Activities:** {{TOP_ENJOYED}}
+- **Common Dislikes:** {{TOP_DISLIKED}}
+- **Average Sleep Quality:** {{AVG_SLEEP}}/10
+- **Feeding Patterns:** {{FEEDING_TRENDS}}
+
+### Developmental Progress
+- **New Skills:** {{NEW_SKILLS}}
+- **Progressing Skills:** {{PROGRESSING_SKILLS}}
+- **Milestones Reached:** {{MILESTONES}}
+
+---
+
+## �🔄 Tomorrow's Plan
 
 ### Activities to Continue
 - {{CONTINUE_ACTIVITY_1}}
@@ -96,6 +118,23 @@
 ### Schedule Adjustments
 - {{SCHEDULE_ADJUST_1}}
 - {{SCHEDULE_ADJUST_2}}
+
+---
+
+## 📧 Email Commands
+*Reply to this email with these commands:*
+
+**Memory Retrieval:**
+- `memory today` - Get today's journal entries
+- `memory week` - Get last 7 days summary  
+- `memory month` - Get last 30 days summary
+- `memory search [keyword]` - Search journal entries
+
+**Quick Actions:**
+- `feedback [your observations]` - Add quick feedback
+- `journal [your notes]` - Add journal entry
+- `patterns` - Get current patterns summary
+- `help` - Show all available commands
 
 ---
 
