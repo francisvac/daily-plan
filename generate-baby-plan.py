@@ -18,7 +18,7 @@ from config import (
 )
 from base_classes import BabyPlannerBase, memory_manager, patterns_manager
 from logger import get_logger, log_error, log_success, log_warning
-from llm_template_generator import llm_template_generator
+from optimized_llm_generator import optimized_llm_generator
 
 class BabyPlanGenerator(BabyPlannerBase):
     """Refactored baby plan generator with improved architecture"""
@@ -349,13 +349,13 @@ Generate age-appropriate baby activities with this JSON structure:
         return plan_data
     
     def _create_plan_file(self, target_date: datetime.date, plan_data: Dict[str, Any]) -> Path:
-        """Create plan markdown file using LLM-generated template"""
+        """Create plan markdown file using optimized LLM-generated template"""
         
-        # Get LLM-generated template
+        # Get optimized LLM-generated template
         age_months = plan_data.get("baby_age", 0)
         developmental_stage = plan_data.get("developmental_stage", "newborn")
         
-        dynamic_template = llm_template_generator.generate_daily_template(
+        dynamic_template = optimized_llm_generator.generate_daily_template(
             target_date, age_months, developmental_stage
         )
         
@@ -634,7 +634,7 @@ Reply to this email with these commands for instant memory access:
             log_error(self.component_name, e, "sending plan email")
     
     def _display_summary(self, plan_data: Dict[str, Any], target_date: datetime.date):
-        """Display plan summary"""
+        """Display plan summary with performance metrics"""
         print("\nBaby Plan Summary:")
         
         if plan_data['baby_age'] == 0:
@@ -646,6 +646,32 @@ Reply to this email with these commands for instant memory access:
         print(f"  Focus: {', '.join(plan_data['focus_areas'])}")
         print(f"  Tummy Time: {len([k for k in plan_data.keys() if 'tummy' in k])} sessions")
         print(f"  Reading Time: {len([k for k in plan_data.keys() if 'reading' in k])} sessions")
+        
+        # Display LLM performance metrics
+        performance_report = optimized_llm_generator.get_performance_report()
+        print(f"\n🤖 LLM Performance:")
+        print(f"  Performance Level: {performance_report['current_level']}")
+        print(f"  Success Rate: {performance_report['success_rate']}")
+        print(f"  Response Time: {performance_report['avg_response_time']}")
+        print(f"  Cache Size: {performance_report['cache_size']} templates")
+        
+        if performance_report['recommendations']:
+            print(f"  Recommendations:")
+            for rec in performance_report['recommendations']:
+                print(f"    - {rec}")
+    
+    def get_system_performance(self) -> Dict[str, Any]:
+        """Get comprehensive system performance report"""
+        return {
+            "llm_performance": optimized_llm_generator.get_performance_report(),
+            "memory_usage": memory_manager.get_summary(30),
+            "patterns_status": patterns_manager.get_baby_patterns(),
+            "system_health": {
+                "cache_status": "healthy" if len(optimized_llm_generator.template_cache) > 0 else "empty",
+                "memory_status": "healthy" if len(memory_manager._memory_cache) > 0 else "empty",
+                "patterns_status": "loaded"
+            }
+        }
 
 def main():
     """Main entry point"""
@@ -658,8 +684,42 @@ def main():
         
         if not success:
             sys.exit(1)
+    elif len(sys.argv) > 1 and sys.argv[1] == "performance":
+        generator = BabyPlanGenerator()
+        performance = generator.get_system_performance()
+        
+        print("🔍 ZeroClaw Baby Planner - Performance Report")
+        print("=" * 50)
+        
+        llm_perf = performance["llm_performance"]
+        print(f"\n🤖 LLM Performance:")
+        print(f"  Level: {llm_perf['current_level']}")
+        print(f"  Success Rate: {llm_perf['success_rate']}")
+        print(f"  Response Time: {llm_perf['avg_response_time']}")
+        print(f"  Total Requests: {llm_perf['total_requests']}")
+        print(f"  Cache Size: {llm_perf['cache_size']}")
+        
+        if llm_perf['recommendations']:
+            print(f"  Recommendations:")
+            for rec in llm_perf['recommendations']:
+                print(f"    - {rec}")
+        
+        memory = performance["memory_usage"]
+        print(f"\n📊 Memory Usage:")
+        print(f"  Total Entries: {memory['total_entries']}")
+        print(f"  Most Enjoyed: {len(memory['most_enjoyed'])}")
+        print(f"  Disliked: {len(memory['most_disliked'])}")
+        print(f"  Avg Sleep: {memory['avg_sleep']:.1f}/10")
+        
+        health = performance["system_health"]
+        print(f"\n🏥 System Health:")
+        for component, status in health.items():
+            print(f"  {component.replace('_', ' ').title()}: {status}")
+        
     else:
-        print("Usage: python3 generate-baby-plan.py baby [YYYY-MM-DD] [age_months]")
+        print("Usage:")
+        print("  python3 generate-baby-plan.py baby [YYYY-MM-DD] [age_months]")
+        print("  python3 generate-baby-plan.py performance")
         sys.exit(1)
 
 if __name__ == "__main__":
