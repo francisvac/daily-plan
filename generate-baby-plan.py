@@ -13,11 +13,12 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List
 
 from config import (
-    AGE_ACTIVITIES, DEVELOPMENT_STAGES, TEMPLATE_PLACEHOLDERS,
+    DEVELOPMENT_STAGES, TEMPLATE_PLACEHOLDERS,
     ERROR_MESSAGES, SUCCESS_MESSAGES, ConfigManager
 )
 from base_classes import BabyPlannerBase, memory_manager, patterns_manager
 from logger import get_logger, log_error, log_success, log_warning
+from llm_template_generator import llm_template_generator
 
 class BabyPlanGenerator(BabyPlannerBase):
     """Refactored baby plan generator with improved architecture"""
@@ -182,19 +183,21 @@ class BabyPlanGenerator(BabyPlannerBase):
         return match.group(1).strip() if match else "Normal"
     
     def _get_age_appropriate_activities(self, age_months: int, patterns: Dict[str, Any]) -> Dict[str, List[str]]:
-        """Get age-appropriate activities"""
+        """Get age-appropriate activities (fallback method)"""
+        from config import AGE_ACTIVITIES_LEGACY
+        
         if age_months < 0:
-            return AGE_ACTIVITIES[-1]
+            return AGE_ACTIVITIES_LEGACY[-1]
         elif age_months == 0:
-            return AGE_ACTIVITIES[0]
+            return AGE_ACTIVITIES_LEGACY[0]
         else:
             # Find the highest age key that's <= age_months
-            valid_ages = [k for k in AGE_ACTIVITIES.keys() if k <= age_months and k >= 0]
+            valid_ages = [k for k in AGE_ACTIVITIES_LEGACY.keys() if k <= age_months and k >= 0]
             if valid_ages:
                 age_range = max(valid_ages)
-                return AGE_ACTIVITIES[age_range]
+                return AGE_ACTIVITIES_LEGACY[age_range]
             else:
-                return AGE_ACTIVITIES[0]
+                return AGE_ACTIVITIES_LEGACY[0]
     
     def _generate_plan_content(self, target_date: datetime.date, 
                              patterns: Dict[str, Any], 
@@ -346,26 +349,23 @@ Generate age-appropriate baby activities with this JSON structure:
         return plan_data
     
     def _create_plan_file(self, target_date: datetime.date, plan_data: Dict[str, Any]) -> Path:
-        """Create plan markdown file"""
-        # Read template
-        with open(self.template_file, 'r') as f:
-            template = f.read()
+        """Create plan markdown file using LLM-generated template"""
         
-        # Get memory summary
-        memory_summary = memory_manager.get_summary(7)
+        # Get LLM-generated template
+        age_months = plan_data.get("baby_age", 0)
+        developmental_stage = plan_data.get("developmental_stage", "newborn")
         
-        # Prepare replacements
-        replacements = self._prepare_template_replacements(target_date, plan_data, memory_summary)
+        dynamic_template = llm_template_generator.generate_daily_template(
+            target_date, age_months, developmental_stage
+        )
         
-        # Apply replacements
-        content = template
-        for placeholder, value in replacements.items():
-            content = content.replace(placeholder, str(value))
+        # Generate plan content from template
+        plan_content = self._generate_content_from_template(dynamic_template, target_date, plan_data)
         
         # Write plan file
         plan_file = self.plan_dir / f"{target_date.strftime('%Y-%m-%d')}-plan.md"
         with open(plan_file, 'w') as f:
-            f.write(content)
+            f.write(plan_content)
         
         return plan_file
     
@@ -405,6 +405,211 @@ Generate age-appropriate baby activities with this JSON structure:
         
         return replacements
     
+    def _generate_content_from_template(self, template: Dict[str, Any], 
+                                    target_date: datetime.date, 
+                                    plan_data: Dict[str, Any]) -> str:
+        """Generate markdown content from LLM template"""
+        
+        # Build header
+        content = f"""# Baby Daily Plan - {target_date.strftime('%Y-%m-%d')}
+
+## 👶 Baby Context
+**Date:** {target_date.strftime('%Y-%m-%d')}  
+**Day:** {target_date.strftime('%A')}  
+**Baby Age:** {self._format_age_display(plan_data, target_date)}  
+**Focus:** {', '.join(plan_data.get('focus_areas', ['bonding', 'development', 'comfort']))}
+
+---
+
+"""
+        
+        # Add template sections
+        template_sections = template.get("template_sections", {})
+        
+        for section_key, section_data in template_sections.items():
+            content += f"## {section_data.get('title', section_key.replace('_', ' ').title())}\n\n"
+            
+            activities = section_data.get("activities", [])
+            for activity in activities:
+                content += f"- [ ] **{activity.get('name', 'Activity').title().replace('_', ' ')}**: {activity.get('description', 'Age-appropriate activity')}\n"
+                
+                # Add duration if available
+                if activity.get('duration'):
+                    content += f"  - **Duration:** {activity['duration']}\n"
+                
+                # Add focus area
+                if activity.get('focus_area'):
+                    content += f"  - **Focus:** {activity['focus_area']}\n"
+                
+                # Add tips
+                tips = activity.get('tips', [])
+                if tips:
+                    content += f"  - **Tips:** {', '.join(tips)}\n"
+                
+                # Add adaptations
+                adaptations = activity.get('adaptations', [])
+                if adaptations:
+                    content += f"  - **Adaptations:** {', '.join(adaptations)}\n"
+                
+                content += "\n"
+        
+        # Add schedule section
+        content += "## 😴 Sleep & Feeding Schedule\n\n"
+        
+        schedule_adjustments = template.get("schedule_adjustments", {})
+        
+        # Feeding times
+        content += "### Feeding Times\n"
+        feeding_times = schedule_adjustments.get("feeding_times", {})
+        for time_key, time_value in feeding_times.items():
+            content += f"- [ ] **{time_key.title()} Feeding:** {time_value}\n"
+        content += "\n"
+        
+        # Sleep times
+        content += "### Sleep Schedule\n"
+        sleep_times = schedule_adjustments.get("sleep_times", {})
+        for time_key, time_value in sleep_times.items():
+            content += f"- [ ] **{time_key.title()}**: {time_value}\n"
+        content += "\n"
+        
+        # Add focus areas and developmental targets
+        content += "## 🎯 Today's Focus\n\n"
+        
+        focus_areas = template.get("focus_areas", [])
+        if focus_areas:
+            content += f"**Primary Focus Areas:** {', '.join(focus_areas)}\n\n"
+        
+        developmental_targets = template.get("developmental_targets", [])
+        if developmental_targets:
+            content += f"**Developmental Targets:** {', '.join(developmental_targets)}\n\n"
+        
+        # Add parenting tips
+        parenting_tips = template.get("parenting_tips", [])
+        if parenting_tips:
+            content += "## 💡 Parenting Tips\n\n"
+            for tip in parenting_tips:
+                content += f"- {tip}\n"
+            content += "\n"
+        
+        # Add adaptation notes
+        adaptation_notes = template.get("adaptation_notes")
+        if adaptation_notes:
+            content += f"## 🔄 Adaptation Notes\n\n{adaptation_notes}\n\n"
+        
+        # Add feedback sections
+        content += """## ✅ Completed Activities
+*Fill this section throughout the day*
+
+### Baby Activities Completed
+- [ ] Activity 1 - Notes about baby's response
+- [ ] Activity 2 - Notes about baby's response
+- [ ] Activity 3 - Notes about baby's response
+
+### Sleep & Feeding Completed
+- [ ] Morning Feeding - Amount, duration, baby's response
+- [ ] Midday Feeding - Amount, duration, baby's response
+- [ ] Afternoon Feeding - Amount, duration, baby's response
+- [ ] Evening Feeding - Amount, duration, baby's response
+- [ ] Night Feeding - Amount, duration, baby's response
+
+- [ ] Morning Nap - Duration, quality, notes
+- [ ] Afternoon Nap - Duration, quality, notes
+- [ ] Evening Nap - Duration, quality, notes
+- [ ] Night Sleep - Bedtime routine, duration, notes
+
+---
+
+## 📝 Baby Feedback Section
+
+### What Baby Enjoyed Most ✅
+- [ ] Activity 1 - Specific details about what baby loved
+- [ ] Activity 2 - Specific details about what baby loved
+- [ ] Activity 3 - Specific details about what baby loved
+
+### What Baby Didn't Like ❌
+- [ ] Activity 1 - What baby disliked and possible reasons
+- [ ] Activity 2 - What baby disliked and possible reasons
+
+### Sleep Quality (1-10)
+**Sleep Quality:** TBD / 10
+
+### Feeding Response
+**Feeding Response:** TBD
+
+### Fussy Periods
+- [ ] Time - Duration - Possible triggers - Soothing techniques that worked
+
+### Happy Periods
+- [ ] Time - Duration - Activities or conditions that made baby happy
+
+### Developmental Observations
+- [ ] New skills or attempts
+- [ ] Changes in awareness or responsiveness
+- [ ] Physical development milestones
+- [ ] Communication developments
+
+---
+
+## 🌟 Special Moments & Journal Notes
+
+### Daily Highlights
+- [ ] Special moment 1 - Description and emotional impact
+- [ ] Special moment 2 - Description and emotional impact
+- [ ] Special moment 3 - Description and emotional impact
+
+### Parent Journal Notes 📔
+- [ ] {{PARENT_JOURNAL_1}}
+- [ ] {{PARENT_JOURNAL_2}}
+- [ ] {{PARENT_JOURNAL_3}}
+
+---
+
+## 📊 Memory & Pattern Summary
+
+### Recent Patterns (Last 7 Days)
+- **Top Enjoyed Activities:** {{TOP_ENJOYED}}
+- **Common Dislikes:** {{TOP_DISLIKED}}
+- **Average Sleep Quality:** {{AVG_SLEEP}}/10
+- **Feeding Trends:** {{FEEDING_TRENDS}}
+
+### Developmental Progress
+- **New Skills:** {{NEW_SKILLS}}
+- **Progressing Skills:** {{PROGRESSING_SKILLS}}
+- **Recent Milestones:** {{MILESTONES}}
+
+---
+
+## 📧 Email Commands
+
+Reply to this email with these commands for instant memory access:
+
+📊 **Memory Retrieval:**
+- `memory today` - Get today's complete journal entry
+- `memory week` - Get last 7 days summary with trends
+- `memory month` - Get last 30 days comprehensive summary
+- `memory search [keyword]` - Search all journal entries
+
+📝 **Quick Actions:**
+- `feedback [observation]` - Add quick feedback note
+- `journal [note]` - Add journal entry to today's record
+- `patterns` - Get current baby patterns and preferences
+- `help` - Show all available commands
+
+💡 **Examples:**
+- `memory week`
+- `memory search sleep`
+- `journal Baby had lots of smiles during tummy time`
+- `feedback Loved the gentle music today`
+
+---
+
+📅 **Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+🤖 **Powered by:** ZeroClaw Baby Daily Planning System
+🧠 **Template:** LLM-Generated with Feedback Adaptation
+"""
+        
+        return content
+    
     def _format_age_display(self, plan_data: Dict[str, Any], target_date: datetime.date) -> str:
         """Format age display string"""
         if plan_data['baby_age'] > 0:
@@ -412,48 +617,6 @@ Generate age-appropriate baby activities with this JSON structure:
         else:
             days_old = self._calculate_baby_age_days(target_date, patterns_manager.get_baby_patterns())
             return f"{days_old} days ({plan_data.get('developmental_stage', 'unknown')} stage)"
-    
-    def _get_prenatal_activity_replacements(self, plan_data: Dict[str, Any]) -> Dict[str, str]:
-        """Get prenatal activity replacements"""
-        return {
-            '{{MORNING_TUMMY}}': plan_data['morning_activities'].get('belly_rubbing', 'Gentle belly rubbing'),
-            '{{MORNING_READING}}': plan_data['morning_activities'].get('reading_stories', 'Read stories to baby'),
-            '{{MORNING_PLAY}}': plan_data['morning_activities'].get('gentle_music', 'Play gentle music'),
-            '{{AFTERNOON_TUMMY}}': plan_data['afternoon_activities'].get('mother_voice', 'Talk to baby with mother voice'),
-            '{{AFTERNOON_READING}}': plan_data['afternoon_activities'].get('gentle_movement', 'Gentle movement exercises'),
-            '{{AFTERNOON_SENSORY}}': plan_data['afternoon_activities'].get('relaxation', 'Relaxation time'),
-            '{{EVENING_PLAY}}': plan_data['evening_activities'].get('calming_music', 'Calming music'),
-            '{{EVENING_READING}}': plan_data['evening_activities'].get('bedtime_stories', 'Bedtime stories'),
-            '{{EVENING_BEDTIME}}': plan_data['evening_activities'].get('mother_bonding', 'Mother-baby bonding'),
-        }
-    
-    def _get_postnatal_activity_replacements(self, plan_data: Dict[str, Any]) -> Dict[str, str]:
-        """Get postnatal activity replacements"""
-        return {
-            '{{MORNING_TUMMY}}': plan_data['morning_activities'].get('tummy_time', 'Tummy time'),
-            '{{MORNING_READING}}': plan_data['morning_activities'].get('reading', 'Reading time'),
-            '{{MORNING_PLAY}}': plan_data['morning_activities'].get('play', 'Play time'),
-            '{{AFTERNOON_TUMMY}}': plan_data['afternoon_activities'].get('tummy_time', 'Tummy time'),
-            '{{AFTERNOON_READING}}': plan_data['afternoon_activities'].get('reading', 'Reading time'),
-            '{{AFTERNOON_SENSORY}}': plan_data['afternoon_activities'].get('sensory', 'Sensory play'),
-            '{{EVENING_PLAY}}': plan_data['evening_activities'].get('play', 'Play time'),
-            '{{EVENING_READING}}': plan_data['evening_activities'].get('reading', 'Reading time'),
-            '{{EVENING_BEDTIME}}': plan_data['evening_activities'].get('bedtime', 'Bedtime routine'),
-        }
-    
-    def _get_schedule_replacements(self, plan_data: Dict[str, Any]) -> Dict[str, str]:
-        """Get schedule replacements"""
-        schedule_keys = ['morning', 'midday', 'afternoon', 'evening', 'night']
-        replacements = {}
-        
-        for key in schedule_keys:
-            replacements[f'{{FEEDING_{key.upper()}}}'] = plan_data['feeding_schedule'].get(key, 'Regular feeding')
-        
-        sleep_keys = ['morning_nap', 'afternoon_nap', 'evening_nap', 'night_sleep']
-        for key in sleep_keys:
-            replacements[f'{{SLEEP_{key.upper()}}}'] = plan_data['sleep_schedule'].get(key, 'Regular sleep')
-        
-        return replacements
     
     def _send_plan_email(self, target_date: datetime.date, plan_file: Path):
         """Send plan via email"""

@@ -123,8 +123,9 @@ FEEDBACK_KEYWORDS = {
 
 JOURNAL_KEYWORDS = ["journal", "note", "thought", "feeling", "observation", "moment"]
 
-# Activity Templates by Age
-AGE_ACTIVITIES = {
+# Activity Templates by Age (Legacy - Now replaced by LLM generation)
+# Keeping for reference only - LLM template generator handles dynamic activity creation
+AGE_ACTIVITIES_LEGACY = {
     -1: {  # Prenatal
         "morning": ["belly_rubbing", "reading_stories", "gentle_music"],
         "afternoon": ["mother_voice", "gentle_movement", "relaxation"],
