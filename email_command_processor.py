@@ -29,7 +29,11 @@ class EmailCommandProcessor(EmailBasedComponent):
         try:
             if self.processed_emails_file.exists():
                 with open(self.processed_emails_file, 'r') as f:
-                    return set(json.load(f))
+                    content = f.read().strip()
+                    if content:
+                        return set(json.loads(content))
+                    else:
+                        return set()
         except Exception as e:
             log_error(self.component_name, e, "loading processed emails")
         return set()
