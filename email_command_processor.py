@@ -6,6 +6,7 @@ Processes email commands for memory retrieval and journal management
 
 import imaplib
 import email
+import json
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
